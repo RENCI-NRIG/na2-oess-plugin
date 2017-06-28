@@ -1,0 +1,48 @@
+OSCARS-LIB is in  https://github.com/esnet/oscars-lib, only oscars-soap is needed to build this. 
+
+For NA2 configuration file, the following parameters can be specified:
+
+                <plugin name="oscars">
+			<!-- mandatory -->
+                        <jar>/some/path/to/jar</jar>
+			<!-- mandatory -->
+                        <mainClass>orca.nodeagent2.oscarslib.Main</mainClass>
+			<!-- mandatory, recommended 24 hours -->
+                        <schedulePeriod length="6" unit="minute" />
+			<!-- mandatory, recommended to be 10-15 minutes, depending on tick length -->
+                        <renewAdvanceTicks>2</renewAdvanceTicks>
+                        <properties>
+				<!-- mandatory -->
+                                <property name="oscars.keystore" value="/path/to/jks" />
+				<!-- mandatory -->
+                                <property name="oscars.truststore" value="/path/to/jks" />
+				<!-- mandatory -->
+                                <property name="oscars.alias" value="alias" />
+				<!-- mandatory -->
+                                <property name="oscars.password" value="password" />
+				<!-- mandatory -->
+                                <property name="oscars.description" value="ORCA-NA2-circuit" />
+				<!-- optional, defaults to false, set to true if you want to see OSCARS SOAP message content  -->
+                                <property name="oscars.logging" value="false" />
+                        </properties>
+                </plugin>
+
+                
+The plugin uses the following ADDITIONAL properties:
+
+	private static final String ENDTIME_PROP = "oscars.end.time"; - on status call returns the end time of the given reservation
+	private static final String CREATETIME_PROP = "oscars.create.time"; - on status call returns the start time of the given reservation
+	private static final String STATUS_PROP = "oscars.status"; - on status call returns the OSCARS status of the reservation
+
+	private static final String TAGZ_PROP = "oscars.tagZ"; - on join call specifies one of the endpoint tags
+	private static final String TAGA_PROP = "oscars.tagA"; - on join call specifies one of the endpoint tags
+	private static final String EPZ_PROP = "oscars.endpointZ"; - on join call specifies one of the endpoint OSCARS urns
+	private static final String EPA_PROP = "oscars.endpointA"; - on join call specifies one of the endpoint OSCARS urns
+	private static final String BW_PROP = "oscars.bw"; - on join call specifies bandwidth in BPS(!)
+	private static final String IDC_PROP = "oscars.ctrl.to.call"; - on join call specifies the URL of the OSCARS controller
+
+Note that the plugin caches state related to OSCARS 'driver' for different IDCs. In case of configuration actions (like updating the 
+trusted certificates or keys), nodeagent should be restarted to force OSCARS plugin to refresh its cache. 
+
+The plugin also builds an independent command-line OSCARS client using the 'package' goal under target/appassembler. This can be 
+used to talk to an OSCARS IDC to manually provision circuits or query for reservations. 
