@@ -1,6 +1,6 @@
 #!/bin/bash 
 
-url="http://localhost:8080/status/execplug"
+url="http://localhost:8080/status/oess-plugin"
 
 curl -k -g -H 'Content-Type: application/json' --digest --user admin:pass $url/$1/ | python -m json.tool
 

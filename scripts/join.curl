@@ -1,10 +1,14 @@
 #!/bin/bash 
 
-url="http://localhost:8080/join/execplug"
+url="http://localhost:8080/join/oess-plugin"
 
 
 curl -k -g -H 'Content-Type: application/json' --digest --user admin:pass -X POST $url -d '{
-	"join.param": "some parameter"
+	"oess.bw": "100",
+	"oess.switchA": "urn:ogf:network:domain=al2s.net.internet2.edu:node=DD:port=DD-eth3",
+	"oess.switchZ": "urn:ogf:network:domain=al2s.net.internet2.edu:node=UNC:port=UNC-eth3",
+	"oess.tagA" : "100",
+	"oess.tagZ" : "100"
 }' | python -m json.tool
 
 echo 

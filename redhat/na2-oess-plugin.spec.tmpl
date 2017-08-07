@@ -1,15 +1,15 @@
 %global commit @@COMMIT@@
 %global shortcommit @@SHORTCOMMIT@@
 
-Summary: nodeagent2 plugin allowing use of executable scripts
-Name: na2-exec-plugin
+Summary: nodeagent2 plugin allowing use of OESS
+Name: na2-oess-plugin
 Version: 0.1
 Release: @@DATE@@git%{shortcommit}
-Source0: https://github.com/RENCI-NRIG/na2-exec-plugin/archive/%{commit}/%{name}-%{version}-%{shortcommit}.tar.gz
+Source0: https://github.com/RENCI-NRIG/na2-oess-plugin/archive/%{commit}/%{name}-%{version}-%{shortcommit}.tar.gz
 Vendor: ExoGENI
 Packager: ExoGENI
 License: Eclipse Public License
-URL: https://github.com/RENCI-NRIG/na2-exec-plugin
+URL: https://github.com/RENCI-NRIG/na2-oess-plugin
 
 BuildArch: noarch
 BuildRoot: %{_builddir}/%{name}-root
@@ -42,7 +42,7 @@ rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT%{homedir}
 mkdir -p $RPM_BUILD_ROOT%{homedir}/plugins
 
-cp -R target/exec-plugin-1.0-SNAPSHOT-jar-with-dependencies.jar $RPM_BUILD_ROOT%{homedir}/plugins/%{name}.jar
+cp -R target/oess-plugin-1.0-SNAPSHOT-jar-with-dependencies.jar $RPM_BUILD_ROOT%{homedir}/plugins/%{name}.jar
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -52,5 +52,5 @@ rm -rf $RPM_BUILD_ROOT
 %{homedir}/plugins/%{name}.jar
 
 %changelog
-*Thu Aug 06 2015 Victor J. Orlikowski <vjo@cs.duke.edu>
-- Packaging na2-exec-plugin
+*Mon Aug 07 2017 Ilya Baldin <ibaldin@renci.org>
+- Packaging na2-oess-plugin

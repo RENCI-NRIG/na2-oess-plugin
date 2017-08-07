@@ -1,0 +1,12 @@
+#!/bin/bash 
+
+url="https://al2s.net.internet2.edu/oess/services/data.cgi?action=get_workgroups"
+
+
+#curl -k -g -H 'Content-Type: application/json' --digest --user admin:pass -X POST $url -d '{
+#	"join.param": "some parameter"
+#}' | python -m json.tool
+
+curl -k -g -X GET $url 
+
+echo 
