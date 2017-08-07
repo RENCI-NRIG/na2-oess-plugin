@@ -1,48 +1,41 @@
-OSCARS-LIB is in  https://github.com/esnet/oscars-lib, only oscars-soap is needed to build this. 
-
 For NA2 configuration file, the following parameters can be specified:
 
-                <plugin name="oscars">
+                <plugin name="oess-plugin">
 			<!-- mandatory -->
-                        <jar>/some/path/to/jar</jar>
+                        <jar>../../../na2-oess-plugin/target/oess-plugin-1.0-SNAPSHOT-jar-with-dependencies.jar</jar>
 			<!-- mandatory -->
-                        <mainClass>orca.nodeagent2.oscarslib.Main</mainClass>
-			<!-- mandatory, recommended 24 hours -->
-                        <schedulePeriod length="6" unit="minute" />
-			<!-- mandatory, recommended to be 10-15 minutes, depending on tick length -->
-                        <renewAdvanceTicks>2</renewAdvanceTicks>
+                        <mainClass>org.renci.nodeagent2.oess.Main</mainClass>
+			<!-- mandatory -->
+                        <schedulePeriod length="5" unit="minute" />
+			<!-- mandatory -->
+                        <description>OESS Plugin for localhost</description>
                         <properties>
 				<!-- mandatory -->
-                                <property name="oscars.keystore" value="/path/to/jks" />
+                                <property name="oess.username" value="oess" />
 				<!-- mandatory -->
-                                <property name="oscars.truststore" value="/path/to/jks" />
+                                <property name="oess.password" value="oess" />
 				<!-- mandatory -->
-                                <property name="oscars.alias" value="alias" />
+                                <property name="oess.url" value="https://localhost:20443/oess" />
 				<!-- mandatory -->
-                                <property name="oscars.password" value="password" />
+                                <property name="workgroup.id" value="1" />
 				<!-- mandatory -->
-                                <property name="oscars.description" value="ORCA-NA2-circuit" />
-				<!-- optional, defaults to false, set to true if you want to see OSCARS SOAP message content  -->
-                                <property name="oscars.logging" value="false" />
+                                <property name="network.type" value="openflow" />
+				<!-- disables SSL cert and host checks, useful for testing -->
+                                <property name="disable.ssl.check" value="true" />
+				<!-- enable HTTP debugging into log file -->
+                                <property name="debug.http" value="false" />
+				<!-- For MPLS network only, force to use shortest path. For openflow shortest path always used regardless -->
+                                <property name="use.shortest.path" value="true" />
+				<!-- comment to put with the circuit created by node agent -->
+                                <property name="oess.comment" value="Test Circuit" />
                         </properties>
                 </plugin>
-
                 
-The plugin uses the following ADDITIONAL properties:
+The plugin uses the following ADDITIONAL properties for JOIN operations:
 
-	private static final String ENDTIME_PROP = "oscars.end.time"; - on status call returns the end time of the given reservation
-	private static final String CREATETIME_PROP = "oscars.create.time"; - on status call returns the start time of the given reservation
-	private static final String STATUS_PROP = "oscars.status"; - on status call returns the OSCARS status of the reservation
+	private static final String TAGZ_PROP = "oess.tagZ"; - on join call specifies one of the endpoint tags
+	private static final String TAGA_PROP = "oess.tagA"; - on join call specifies one of the endpoint tags
+	private static final String EPZ_PROP = "oess.endpointZ"; - on join call specifies one of the endpoint OSCARS urns
+	private static final String EPA_PROP = "oess.endpointA"; - on join call specifies one of the endpoint OSCARS urns
+	private static final String BW_PROP = "oess.bw"; - on join call specifies bandwidth in BPS(!)
 
-	private static final String TAGZ_PROP = "oscars.tagZ"; - on join call specifies one of the endpoint tags
-	private static final String TAGA_PROP = "oscars.tagA"; - on join call specifies one of the endpoint tags
-	private static final String EPZ_PROP = "oscars.endpointZ"; - on join call specifies one of the endpoint OSCARS urns
-	private static final String EPA_PROP = "oscars.endpointA"; - on join call specifies one of the endpoint OSCARS urns
-	private static final String BW_PROP = "oscars.bw"; - on join call specifies bandwidth in BPS(!)
-	private static final String IDC_PROP = "oscars.ctrl.to.call"; - on join call specifies the URL of the OSCARS controller
-
-Note that the plugin caches state related to OSCARS 'driver' for different IDCs. In case of configuration actions (like updating the 
-trusted certificates or keys), nodeagent should be restarted to force OSCARS plugin to refresh its cache. 
-
-The plugin also builds an independent command-line OSCARS client using the 'package' goal under target/appassembler. This can be 
-used to talk to an OSCARS IDC to manually provision circuits or query for reservations. 

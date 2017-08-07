@@ -47,8 +47,8 @@ public class Main implements Plugin {
 	private static final String CIRCUIT_ID_PROP = "oess.circuit.id";
 	private static final String TAGZ_PROP = "oess.tagZ";
 	private static final String TAGA_PROP = "oess.tagA";
-	private static final String EPZ_PROP = "oess.switchZ";
-	private static final String EPA_PROP = "oess.switchA";
+	private static final String EPZ_PROP = "oess.endpointZ";
+	private static final String EPA_PROP = "oess.endpointA";
 	private static final String BW_PROP = "oess.bw";
 	private static final String PASSWORD_PROP = "oess.password";
 	private static final String USERNAME_PROP = "oess.username";
