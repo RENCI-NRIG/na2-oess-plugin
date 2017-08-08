@@ -227,9 +227,12 @@ public class Driver {
 			throw new OESSException("OESS URL is not a valid URL: " + url);
 		}
 		oessUrl = url;
-		dataCgiUrl = oessUrl + "/services/data.cgi";
-		provisionCgiUrl = oessUrl + "/services/provisioning.cgi";
+		dataCgiUrl = oessUrl + "/data.cgi";
+		provisionCgiUrl = oessUrl + "/provisioning.cgi";
 		debugHttp = debug;
+		
+		log.info("Using OESS data.cgi "+ dataCgiUrl + " provisioning cgi " + provisionCgiUrl + " with HTTP debug " + (debugHttp ? "on" : " off"));
+		
 		if (disableSSLChecks)
 			initAllTrustingSSL();
 		
