@@ -208,7 +208,7 @@ public class Driver {
 		return restTemplate;
 	}
 	
-	public Driver(String username, String password, int wgid, String url, NetworkType t, boolean disableSSLChecks, boolean debug) throws OESSException {
+	public Driver(String username, String password, int wgid, String url, NetworkType t, boolean disableSSLChecks, boolean disableSNI, boolean debug) throws OESSException {
 		
 		try {
 			log = Util.getLog(this.getClass().getName());
@@ -232,6 +232,9 @@ public class Driver {
 		debugHttp = debug;
 		
 		log.info("Using OESS data.cgi "+ dataCgiUrl + " provisioning cgi " + provisionCgiUrl + " with HTTP debug " + (debugHttp ? "on" : " off"));
+		
+		if (disableSNI)
+			System.setProperty("jsse.enableSNIExtension", "false");
 		
 		if (disableSSLChecks)
 			initAllTrustingSSL();
@@ -422,7 +425,7 @@ public class Driver {
 	public static void main(String[] argv) {
 		try {
 
-			Driver d = new Driver("oess", "oess", 1, "https://localhost:20443/oess", NetworkType.openflow, true, false);
+			Driver d = new Driver("oess", "oess", 1, "https://localhost:20443/oess", NetworkType.openflow, true, false, false);
 			
 			WorkgroupResults wres = d.getWorkgroups();
 			System.out.println(wres);

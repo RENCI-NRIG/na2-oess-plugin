@@ -20,8 +20,11 @@ For NA2 configuration file, the following parameters can be specified:
                                 <property name="workgroup.id" value="1" />
 				<!-- mandatory -->
                                 <property name="network.type" value="openflow" />
-				<!-- disables SSL cert and host checks, useful for testing -->
+				<!-- disables SSL cert and host checks, useful for testing, should be
+				     enabled in production  -->
                                 <property name="disable.ssl.check" value="true" />
+				<!-- disable SSL SNI extension (should be done for AL2S OESS servers) -->
+				<property name="disable.sni" value="true" />
 				<!-- enable HTTP debugging into log file -->
                                 <property name="debug.http" value="false" />
 				<!-- For MPLS network only, force to use shortest path. For openflow shortest path always used regardless -->

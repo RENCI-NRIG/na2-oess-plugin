@@ -54,6 +54,7 @@ public class Main implements Plugin {
 	private static final String USERNAME_PROP = "oess.username";
 	private static final String NETTYPE_PROP = "network.type";
 	private static final String DISABLESSL_PROP = "disable.ssl.check";
+	private static final String DISABLESNI_PROP = "disable.sni";
 	private static final String DEBUGHTTP_PROP = "debug.http";
 	private static final String WORKGROUP_ID_PROP = "workgroup.id";
 	private static final String OESSURL_PROP = "oess.url";
@@ -127,11 +128,15 @@ public class Main implements Plugin {
 			
 			useShortestPath = yesOption(configProperties.get(USE_SHORTEST_PATH_PROP));
 			
+			// client does not send name as part of handshake to tell server which certs to present
+			// doesn't seem to work with OESS servers.
+			boolean disableSNI = yesOption(configProperties.get(DISABLESNI_PROP));
+			
 			if (configProperties.get(API_COMMENT_PROP) != null)
 				apiComment = configProperties.get(API_COMMENT_PROP);
 			
 			oessDriver = new Driver(configProperties.get(USERNAME_PROP), configProperties.get(PASSWORD_PROP), wgid,
-					configProperties.get(OESSURL_PROP), nt, disableSSLChecks, debugHttp);
+					configProperties.get(OESSURL_PROP), nt, disableSSLChecks, disableSNI, debugHttp);
 			
 		} catch(Exception e) {
 			throw new PluginException("OESS Plugin unable to get logger: " + e);
