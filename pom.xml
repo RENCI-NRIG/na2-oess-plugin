@@ -38,8 +38,8 @@
 	</properties>
 
 	<scm>
-		<connection>scm:git:https://github.com/RENCI-NRIG/no2-oess-plugin.git</connection>
-		<developerConnection>scm:git:https://github.com/RENCI-NRIG/na2-oess-plugin.git</developerConnection>
+		<connection>scm:git:git@github.com:RENCI-NRIG/no2-oess-plugin.git</connection>
+		<developerConnection>scm:git:git@github.com:RENCI-NRIG/na2-oess-plugin.git</developerConnection>
 		<url>https://github.com/RENCI-NRIG/na2-oess-plugin</url>
 		<tag>HEAD</tag>
 	</scm>
