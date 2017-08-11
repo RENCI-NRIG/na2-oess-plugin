@@ -9,5 +9,5 @@ cp na2-oess-plugin.spec.tmpl na2-oess-plugin.spec
 sed -i -e "s;@@DATE@@;${DATE};" na2-oess-plugin.spec
 sed -i -e "s;@@COMMIT@@;${COMMIT};" na2-oess-plugin.spec
 #sed -i -e "s;@@SHORTCOMMIT@@;${SHORTCOMMIT};" na2-oess-plugin.spec
-sed -i -e "s;@@VERSION@@;${REL_VERSION};" nodeagent2.spec
+sed -i -e "s;@@VERSION@@;${REL_VERSION};" na2-oess-plugin.spec
 
