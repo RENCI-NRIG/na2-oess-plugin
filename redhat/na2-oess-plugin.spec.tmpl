@@ -42,7 +42,7 @@ rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT%{homedir}
 mkdir -p $RPM_BUILD_ROOT%{homedir}/plugins
 
-cp -R target/oess-plugin-1.0-SNAPSHOT-jar-with-dependencies.jar $RPM_BUILD_ROOT%{homedir}/plugins/%{name}.jar
+cp -R target/oess-plugin-%{version}-jar-with-dependencies.jar $RPM_BUILD_ROOT%{homedir}/plugins/%{name}.jar
 
 %clean
 rm -rf $RPM_BUILD_ROOT
