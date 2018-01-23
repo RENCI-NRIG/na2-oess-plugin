@@ -1,11 +1,10 @@
 %global commit @@COMMIT@@
-%global shortcommit @@SHORTCOMMIT@@
 
 Summary: nodeagent2 plugin allowing use of OESS
 Name: na2-oess-plugin
-Version: 0.1
-Release: @@DATE@@git%{shortcommit}
-Source0: https://github.com/RENCI-NRIG/na2-oess-plugin/archive/%{commit}/%{name}-%{version}-%{shortcommit}.tar.gz
+Version: @@VERSION@@
+Release: @@DATE@@
+Source0: https://github.com/RENCI-NRIG/na2-oess-plugin/archive/%{commit}/%{name}-%{version}-%{release}.tar.gz
 Vendor: ExoGENI
 Packager: ExoGENI
 License: Eclipse Public License
@@ -31,7 +30,7 @@ This package contains the Exec plugin for nodeagent2.
 It allows nodeagent2 to call scripts for its various operations.
 
 %prep
-%setup -q -n %{name}-%{version}-%{shortcommit}
+%setup -q -n %{name}-%{version}-%{release}
 
 %build
 LANG=en_US.UTF-8 mvn clean package
@@ -42,7 +41,7 @@ rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT%{homedir}
 mkdir -p $RPM_BUILD_ROOT%{homedir}/plugins
 
-cp -R target/oess-plugin-1.0-SNAPSHOT-jar-with-dependencies.jar $RPM_BUILD_ROOT%{homedir}/plugins/%{name}.jar
+cp -R target/oess-plugin-@@SIMPLE_VERSION@@-jar-with-dependencies.jar $RPM_BUILD_ROOT%{homedir}/plugins/%{name}.jar
 
 %clean
 rm -rf $RPM_BUILD_ROOT
