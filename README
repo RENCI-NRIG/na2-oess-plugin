@@ -42,3 +42,4 @@ The plugin uses the following ADDITIONAL properties for JOIN operations:
 	private static final String EPA_PROP = "oess.endpointA"; - on join call specifies one of the endpoint OSCARS urns
 	private static final String BW_PROP = "oess.bw"; - on join call specifies bandwidth in BPS(!)
 
+
