@@ -8,6 +8,7 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -62,6 +63,7 @@ public class Driver {
 	int wgid;
 	RestTemplate restTemplate = null;
 	Log log;
+    private ReentrantLock fairLock = new ReentrantLock(true);
 	
 	/**
 	 * Host name verifier that does not perform any checks.
@@ -339,11 +341,18 @@ public class Driver {
 		
 		if (debugHttp)
 			log.debug(builder2.build().encode().toUri());
-		
-		ProvisionCircuitResults res2 = restTemplate.getForObject(builder2.build().encode().toUri(), ProvisionCircuitResults.class);
-		if (res2.getError_text() != null) 
-			throw new OESSException("Unable to provision circuit between " + src + "/" + srcInt + "/" + srcTag + " and " + 
-					dst + "/" + dstInt + "/" + dstTag + " due to " + res2.getError_text());
+
+		fairLock.lock();
+        ProvisionCircuitResults res2 = null;
+		try {
+            res2 = restTemplate.getForObject(builder2.build().encode().toUri(), ProvisionCircuitResults.class);
+            if (res2.getError_text() != null)
+                throw new OESSException("Unable to provision circuit between " + src + "/" + srcInt + "/" + srcTag + " and " +
+                        dst + "/" + dstInt + "/" + dstTag + " due to " + res2.getError_text());
+        }
+        finally {
+            fairLock.unlock();
+        }
 		return res2;
 	}
 	
@@ -380,11 +389,18 @@ public class Driver {
 		
 		if (debugHttp)
 			log.debug(builder2.build().encode().toUri());
-		
-		ProvisionCircuitResults res2 = restTemplate.getForObject(builder2.build().encode().toUri(), ProvisionCircuitResults.class);
-		if (res2.getError_text() != null) 
-			throw new OESSException("Unable to provision circuit between " + src + "/" + srcInt + "/" + srcTag + " and " + 
-					dst + "/" + dstInt + "/" + dstTag + " due to " + res2.getError_text());
+
+		fairLock.lock();
+        ProvisionCircuitResults res2 = null;
+		try {
+		    res2 = restTemplate.getForObject(builder2.build().encode().toUri(), ProvisionCircuitResults.class);
+            if (res2.getError_text() != null)
+                throw new OESSException("Unable to provision circuit between " + src + "/" + srcInt + "/" + srcTag + " and " +
+                        dst + "/" + dstInt + "/" + dstTag + " due to " + res2.getError_text());
+            }
+        finally {
+            fairLock.unlock();
+        }
 		return res2;
 	}
 	
