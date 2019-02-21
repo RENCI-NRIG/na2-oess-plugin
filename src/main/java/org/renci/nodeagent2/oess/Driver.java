@@ -415,9 +415,16 @@ public class Driver {
         if (debugHttp)
             log.debug(builder3.build().encode().toUri());
 
-        StatusResults res3 = restTemplate.getForObject(builder3.build().encode().toUri(), StatusResults.class);
-        if (res3.getError_text() != null) 
-            throw new OESSException("Unable to remove circuit " + circuitId + " due to " + res3.getError_text());
+        StatusResults res3 = null;
+        fairLock.lock();
+        try {
+            res3 = restTemplate.getForObject(builder3.build().encode().toUri(), StatusResults.class);
+            if (res3.getError_text() != null)
+                throw new OESSException("Unable to remove circuit " + circuitId + " due to " + res3.getError_text());
+        }
+        finally {
+            fairLock.unlock();
+        }
 
         return res3;
     }
