@@ -61,7 +61,8 @@ public class Main implements Plugin {
 	private static final String USE_SHORTEST_PATH_PROP = "oess.use.shortest.path";
 	private static final String API_COMMENT_PROP = "oess.comment";
 	
-	private static Pattern urnPattern = Pattern.compile("urn:ogf:network:domain=([\\w.-]+):node=([\\w.-]+):port=([/\\w.-]+).*");
+	//private static Pattern urnPattern = Pattern.compile("urn:ogf:network:domain=([\\w.-]+):node=([\\w.-]+):port=([/\\w.-]+).*");
+	private static Pattern urnPattern = Pattern.compile("urn:ogf:network:domain=([\\w\\.\\-]+):node=([\\w\\.\\-]+):port=([/\\w.-]+[:\\d]+)+.*");
 
 	Log log;
 	private Driver oessDriver = null;
