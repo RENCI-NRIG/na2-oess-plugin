@@ -13,7 +13,6 @@ import org.renci.nodeagent2.agentlib.ReservationId;
 import org.renci.nodeagent2.agentlib.Util;
 import org.renci.nodeagent2.oess.json.CircuitDetailsResults;
 import org.renci.nodeagent2.oess.json.ProvisionCircuitResults;
-import org.renci.nodeagent2.oess.json.ShortestPathResults;
 
 
 public class Main implements Plugin {

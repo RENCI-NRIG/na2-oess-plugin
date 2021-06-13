@@ -24,7 +24,6 @@ import org.renci.nodeagent2.oess.Main.NetworkType;
 import org.renci.nodeagent2.oess.json.CircuitDetailsResults;
 import org.renci.nodeagent2.oess.json.NodeStatusResults;
 import org.renci.nodeagent2.oess.json.ProvisionCircuitResults;
-import org.renci.nodeagent2.oess.json.ShortestPathResults;
 import org.renci.nodeagent2.oess.json.StatusResults;
 import org.renci.nodeagent2.oess.json.WorkgroupResults;
 import org.springframework.http.HttpRequest;
@@ -56,7 +55,7 @@ public class Driver {
     private static final String JSON_METHOD = "method";
 
     String username, password;
-    String oessUrl, dataCgiUrl, provisionCgiUrl;
+    String oessUrl, dataCgiUrl, circuitCgiUrl;
     boolean debugHttp = false;
     boolean disableSSLChecks = false;
     NetworkType netType = NetworkType.mpls;
@@ -230,10 +229,10 @@ public class Driver {
         }
         oessUrl = url;
         dataCgiUrl = oessUrl + "/data.cgi";
-        provisionCgiUrl = oessUrl + "/provisioning.cgi";
+        circuitCgiUrl = oessUrl + "/circuit.cgi";
         debugHttp = debug;
 
-        log.info("Using OESS data.cgi "+ dataCgiUrl + " provisioning cgi " + provisionCgiUrl + " with HTTP debug " + (debugHttp ? "on" : " off"));
+        log.info("Using OESS data.cgi "+ dataCgiUrl + " circuit.cgi " + circuitCgiUrl + " with HTTP debug " + (debugHttp ? "on" : " off"));
 
         if (disableSNI)
             System.setProperty("jsse.enableSNIExtension", "false");
@@ -277,84 +276,6 @@ public class Driver {
         return res;
     }
 
-    /**
-     * Get shortest path between src and dst
-     * @param t
-     * @param src
-     * @param dst
-     * @return
-     * @throws OESSException
-     */
-    public ShortestPathResults getShortestPath(String src, String dst) throws OESSException {
-        log.info("Invoking getShortestPath()");
-        UriComponentsBuilder builder4 = UriComponentsBuilder.fromHttpUrl(dataCgiUrl)
-            .queryParam(JSON_METHOD, "get_shortest_path")
-            .queryParam(JSON_TYPE, netType.name())
-            .queryParam(JSON_NODE, src)
-            .queryParam(JSON_NODE, dst);
-        if (debugHttp) 
-            log.debug(builder4.build().encode().toUri());
-
-        ShortestPathResults spres = restTemplate.getForObject(builder4.build().encode().toUri(), ShortestPathResults.class);
-        if (spres.getError_text() != null)
-            throw new OESSException("Unable to compute shortest path between: " + src + " and " + dst + " due to: " + 
-                    spres.getError_text());
-        return spres;
-    }
-
-    /**
-     * Provision a ptop circuit using shortest path
-     * @param desc
-     * @param bw
-     * @param src
-     * @param srcInt
-     * @param srcTag
-     * @param dst
-     * @param dstInt
-     * @param dstTag
-     * @param spres
-     * @return
-     * @throws OESSException
-     */
-    public ProvisionCircuitResults provisionCircuit(String desc, int bw, 
-            String src, String srcInt, int srcTag, String dst, String dstInt, int dstTag,
-            ShortestPathResults spres) throws OESSException {
-        log.info("Invoking provisionCircuit() with shortets path for " + src + "/" + srcInt + "/" + srcTag + " and " + 
-                dst + "/" + dstInt + "/" + dstTag);
-        UriComponentsBuilder builder2 = UriComponentsBuilder.fromHttpUrl(provisionCgiUrl)
-            .queryParam(JSON_METHOD, "provision_circuit")
-            .queryParam(JSON_WORKGROUP_ID, wgid)
-            .queryParam(JSON_PROVISION_TIME, "-1")
-            .queryParam(JSON_REMOVE_TIME, "-1")
-            .queryParam(JSON_DESCRIPTION, desc)
-            .queryParam(JSON_BANDWIDTH, "" + bw)
-            .queryParam(JSON_NODE, src)
-            .queryParam(JSON_INTERFACE, srcInt)
-            .queryParam(JSON_TAG, srcTag)
-            .queryParam(JSON_NODE, dst)
-            .queryParam(JSON_INTERFACE, dstInt)
-            .queryParam(JSON_TAG, dstTag);
-
-        for(ShortestPathResults.Link l: spres.getResults()) {
-            builder2.queryParam(JSON_LINK, l.getLink());
-        }
-
-        if (debugHttp)
-            log.debug(builder2.build().encode().toUri());
-
-        fairLock.lock();
-        ProvisionCircuitResults res2 = null;
-        try {
-            res2 = restTemplate.getForObject(builder2.build().encode().toUri(), ProvisionCircuitResults.class);
-            if (res2.getError_text() != null)
-                throw new OESSException("Unable to provision circuit between " + src + "/" + srcInt + "/" + srcTag + " and " +
-                        dst + "/" + dstInt + "/" + dstTag + " due to " + res2.getError_text());
-        }
-        finally {
-            fairLock.unlock();
-        }
-        return res2;
-    }
 
     /**
      * Provision a ptop circuit with default path (MPLS only according to docs)
@@ -373,7 +294,7 @@ public class Driver {
             String src, String srcInt, int srcTag, String dst, String dstInt, int dstTag) throws OESSException {
         log.info("Invoking provisionCircuit() with default path for " + src + "/" + srcInt + "/" + srcTag + " and " + 
                 dst + "/" + dstInt + "/" + dstTag);
-        UriComponentsBuilder builder2 = UriComponentsBuilder.fromHttpUrl(provisionCgiUrl)
+        UriComponentsBuilder builder2 = UriComponentsBuilder.fromHttpUrl(circuitCgiUrl)
             .queryParam(JSON_METHOD, "provision_circuit")
             .queryParam(JSON_WORKGROUP_ID, wgid)
             .queryParam(JSON_PROVISION_TIME, "-1")
@@ -406,7 +327,7 @@ public class Driver {
 
     public StatusResults removeCircuit(String circuitId) throws OESSException {
         log.info("Invoking removeCircuit() for " + circuitId);
-        UriComponentsBuilder builder3 = UriComponentsBuilder.fromHttpUrl(provisionCgiUrl)
+        UriComponentsBuilder builder3 = UriComponentsBuilder.fromHttpUrl(circuitCgiUrl)
             .queryParam(JSON_METHOD, "remove_circuit")
             .queryParam(JSON_WORKGROUP_ID, wgid)
             .queryParam(JSON_REMOVE_TIME, "-1")
@@ -456,10 +377,7 @@ public class Driver {
             NodeStatusResults nres = d.getAllNodeStatus();
             System.out.println(nres);
 
-            ShortestPathResults spres = d.getShortestPath("DD", "UNC");
-            System.out.println(spres);
-
-            ProvisionCircuitResults pcres = d.provisionCircuit("API Circuit", 100, "DD", "DD-eth3", 100, "UNC", "UNC-eth3", 100, spres);
+            ProvisionCircuitResults pcres = d.provisionCircuit("API Circuit", 100, "DD", "DD-eth3", 100, "UNC", "UNC-eth3", 100);
             System.out.println(pcres);
 
             Thread.sleep(5000);
