@@ -69,7 +69,7 @@ public class Main implements Plugin {
 	String apiComment = "EXOGENI Circuit";
 	
 	// OESS Supports both types
-	public enum NetworkType {openflow, mpls};
+	public enum NetworkType {mpls};
 
 	public static OESSEndpoint parseUrn(String urn) {
 		Matcher m = urnPattern.matcher(urn);
@@ -117,11 +117,8 @@ public class Main implements Plugin {
 				log.info("Enabling HTTP debugging features.");
 			
 			nt = NetworkType.mpls;
-			if (NetworkType.openflow.name().equalsIgnoreCase(configProperties.get(NETTYPE_PROP))) 
-				nt = NetworkType.openflow;
-			else
-				if (!NetworkType.mpls.name().equalsIgnoreCase(configProperties.get(NETTYPE_PROP))) 
-					throw new PluginException("Plugin configuration must specify one of two network types: openflow or mpls. Instead " + configProperties.get(NETTYPE_PROP));
+			if (!NetworkType.mpls.name().equalsIgnoreCase(configProperties.get(NETTYPE_PROP))) 
+					throw new PluginException("Plugin configuration must specify mpls network type only. Instead " + configProperties.get(NETTYPE_PROP));
 
 			int wgid = Integer.parseInt(configProperties.get(WORKGROUP_ID_PROP));
 			
@@ -185,26 +182,16 @@ public class Main implements Plugin {
 				" to " + dst.getNode() + "---" + dst.getIntface() + "/" + dstTag + " with bandwidth " + bwMbps + "Mbps");
 		
 		try {
-			// get shortest path if OpenFlow
-			ShortestPathResults spres = null;
-			if ((nt == NetworkType.openflow) || (useShortestPath)) {
-				spres = oessDriver.getShortestPath(src.getNode(), dst.getNode());
-			}
-
 			ProvisionCircuitResults pcr = null;
-			if (useShortestPath)
-				pcr = oessDriver.provisionCircuit(apiComment, bwMbps, src.getNode(), src.getIntface(), srcTag, 
-						dst.getNode(), dst.getIntface(), dstTag, spres);
-			else
-				pcr = oessDriver.provisionCircuit(apiComment, bwMbps, src.getNode(), src.getIntface(), srcTag, 
-						dst.getNode(), dst.getIntface(), dstTag);
+			pcr = oessDriver.provisionCircuit(apiComment, bwMbps, src.getNode(), src.getIntface(), srcTag, 
+					dst.getNode(), dst.getIntface(), dstTag);
 			
-			log.info("Created OESS circuit " + pcr.getResults().getCircuit_id());
+			log.info("Created OESS circuit " + pcr.getCircuit_id());
 
 			Properties joinProps = new Properties();
-			joinProps.put(CIRCUIT_ID_PROP, pcr.getResults().getCircuit_id());
+			joinProps.put(CIRCUIT_ID_PROP, pcr.getCircuit_id());
 			joinProps.putAll(callerProps);
-			PluginReturn pRet = new PluginReturn(new ReservationId(pcr.getResults().getCircuit_id()), joinProps);
+			PluginReturn pRet = new PluginReturn(new ReservationId(pcr.getCircuit_id()), joinProps);
 
 			return pRet;
 		} catch (OESSException oe) {
@@ -246,9 +233,13 @@ public class Main implements Plugin {
 			log.info("Requesting OESS circuit detais for " + resId.getId());
 			CircuitDetailsResults cdr = oessDriver.circuitDetails(resId.getId());
 			
-			schedProps.put(STATUS_PROP, cdr.getResults().getState());
-			schedProps.put(DATE_PROP, cdr.getResults().getCreated_on());
-			schedProps.put(USER_PROP, cdr.getResults().getLast_modified_by().getAuth_name());
+			if (cdr.getResults().size() > 0) {
+				schedProps.put(STATUS_PROP, cdr.getResults().get(0).getState());
+				schedProps.put(DATE_PROP, cdr.getResults().get(0).getCreated_on());
+				schedProps.put(USER_PROP, cdr.getResults().get(0).getLast_modified_by().getUsername());
+			} else {
+				schedProps.put(STATUS_PROP, "unknown");
+			}
 			PluginReturn pr = new PluginReturn(resId, schedProps);
 
 			return pr;

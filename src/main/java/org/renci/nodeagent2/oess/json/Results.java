@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @JsonIgnoreProperties(ignoreUnknown=true)
 public abstract class Results {
 
-	private int error;
+	private int error, success;
 	private String error_text;
 	
 	public Integer getError() {
@@ -15,6 +15,12 @@ public abstract class Results {
 	}
 	public void setError(Integer error) {
 		this.error = error;
+	}
+	public Integer getSuccess() {
+		return success;
+	}
+	public void setSuccess(Integer success) {
+		this.success = success;
 	}
 	public String getError_text() {
 		return error_text;
@@ -46,7 +52,7 @@ public abstract class Results {
 	
 	@Override
 	public String toString() {
-		if (error_text != null) {
+		if (error == 1) {
 			return "Results {error_text=" + error_text + ", error=" + error + "}";
 		} else {
 			StringBuilder sb = new StringBuilder();

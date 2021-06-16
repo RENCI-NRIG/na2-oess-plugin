@@ -4,57 +4,95 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+/*
+ * OESS produces a lot of information, these beans cherry-pick only what is essential
+ */
+
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class CircuitDetailsResults extends Results {
 
 	@JsonIgnoreProperties(ignoreUnknown=true)
 	public static class UserDetails {
-		String status, family_name, given_names, auth_name, email;
+		String last_name, first_name, username, email;
 
-		public String getStatus() {
-			return status;
+		public String getLast_name() {
+			return last_name;
 		}
 
-		public void setStatus(String status) {
-			this.status = status;
+		public void setLast_name(String last_name) {
+			this.last_name = last_name;
+		}
+		
+		public String getFirst_name() {
+			return last_name;
 		}
 
-		public String getFamily_name() {
-			return family_name;
+		public void setFirst_name(String first_name) {
+			this.first_name = first_name;
 		}
 
-		public void setFamily_name(String family_name) {
-			this.family_name = family_name;
+		
+		public void setUsername(String username) {
+			this.username = username;
 		}
-
-		public String getGiven_names() {
-			return given_names;
-		}
-
-		public void setGiven_names(String given_names) {
-			this.given_names = given_names;
-		}
-
-		public String getAuth_name() {
-			return auth_name;
-		}
-
-		public void setAuth_name(String auth_name) {
-			this.auth_name = auth_name;
-		}
-
-		public String getEmail() {
-			return email;
+		
+		public String getUsername() {
+			return this.username;
 		}
 
 		public void setEmail(String email) {
 			this.email = email;
 		}
+		
+		public String getEmail() {
+			return email;
+		}
 
 		@Override
 		public String toString() {
-			return "UserDetails [status=" + status + ", family_name=" + family_name + ", given_names=" + given_names
-					+ ", auth_name=" + auth_name + ", email=" + email + "]";
+			return "UserDetails [email=" + this.email + " First Name/Last Name=" + this.first_name + "/" + this.last_name + "]";
+		}
+	}
+	
+	@JsonIgnoreProperties(ignoreUnknown=true)
+	public static class EndpointDetails {
+		String node, intface, description;
+		int tag, bandwidth;
+		
+		public String getNode() {
+			return node;
+		}
+		public void setNode(String node) {
+			this.node = node;
+		}
+		public int getTag() {
+			return tag;
+		}
+		public void setTag(int tag) {
+			this.tag = tag;
+		}
+		public String getInterface() {
+			return intface;
+		}
+		public void setInterface(String iface) {
+			this.intface = iface;
+		}
+		public String getDescription() {
+			return this.description;
+		}
+		public void setDescription(String description) {
+			this.description = description;
+		}
+		public int getBandwidth() {
+			return bandwidth;
+		}
+		public void setBandwidth(int bw) {
+			this.bandwidth = bw;
+		}
+		@Override
+		public String toString() {
+			return "EndpointDetails [node=" + node + ", interface=" + intface + ", tag=" + tag + ", bandwidth=" + bandwidth
+					+ ", description=" + description + "]";
 		}
 	}
 	
@@ -85,9 +123,9 @@ public class CircuitDetailsResults extends Results {
 	}
 	
 	public static class PathDetails {
-		String circuit_id, path_id, path_type, path_state;
-		int status;
+		String circuit_id, path_id, mpls_type, type, state;
 		List<LinkDetails> links;
+		
 		public String getCircuit_id() {
 			return circuit_id;
 		}
@@ -100,23 +138,23 @@ public class CircuitDetailsResults extends Results {
 		public void setPath_id(String path_id) {
 			this.path_id = path_id;
 		}
-		public String getPath_type() {
-			return path_type;
+		public String getMpls_type() {
+			return mpls_type;
 		}
-		public void setPath_type(String path_type) {
-			this.path_type = path_type;
+		public void setMpls_type(String mpls_type) {
+			this.mpls_type = mpls_type;
 		}
-		public String getPath_state() {
-			return path_state;
+		public String getType() {
+			return type;
 		}
-		public void setPath_state(String path_state) {
-			this.path_state = path_state;
+		public void setType(String type) {
+			this.type = type;
 		}
-		public int getStatus() {
-			return status;
+		public String getState() {
+			return state;
 		}
-		public void setStatus(int status) {
-			this.status = status;
+		public void setState(String Sstate) {
+			this.state = Sstate;
 		}
 		public List<LinkDetails> getLinks() {
 			return links;
@@ -126,42 +164,21 @@ public class CircuitDetailsResults extends Results {
 		}
 		@Override
 		public String toString() {
-			return "PathDetails [circuit_id=" + circuit_id + ", path_id=" + path_id + ", path_type=" + path_type
-					+ ", path_state=" + path_state + ", status=" + status + ", links=" + links + "]";
-		}
-	}
-	
-	public static class PathsDetails {
-		PathDetails primary, backup;
-
-		public PathDetails getPrimary() {
-			return primary;
-		}
-
-		public void setPrimary(PathDetails primary) {
-			this.primary = primary;
-		}
-
-		public PathDetails getBackup() {
-			return backup;
-		}
-
-		public void setBackup(PathDetails backup) {
-			this.backup = backup;
-		}
-
-		@Override
-		public String toString() {
-			return "PathsDetails [primary=" + primary + ", backup=" + backup + "]";
+			return "PathDetails [circuit_id=" + circuit_id + ", path_id=" + path_id + ", mpls_type=" + mpls_type + ", type=" + type
+					+ ", state=" + state + ", links=" + links + "]";
 		}
 	}
 	
 	// main container of information
-	public class CircuitDetails {
+	public static class CircuitDetail {
 		UserDetails last_modified_by;
-		PathsDetails paths;
+		UserDetails created_by;
+		List<PathDetails> paths;
+		List<EndpointDetails> endpoints;
 		String state;
 		String created_on;
+		String last_modified_on;
+		String description;
 		
 		public UserDetails getLast_modified_by() {
 			return last_modified_by;
@@ -169,11 +186,23 @@ public class CircuitDetailsResults extends Results {
 		public void setLast_modified_by(UserDetails last_modified_by) {
 			this.last_modified_by = last_modified_by;
 		}
-		public PathsDetails getPaths() {
+		public UserDetails getCreated_by() {
+			return created_by;
+		}
+		public void setCreated_by(UserDetails created_by) {
+			this.created_by = created_by;
+		}
+		public List<PathDetails> getPaths() {
 			return paths;
 		}
-		public void setPaths(PathsDetails paths) {
+		public void setPaths(List<PathDetails> paths) {
 			this.paths = paths;
+		}
+		public List<EndpointDetails> getEndpoints() {
+			return endpoints;
+		}
+		public void setEndpoints(List<EndpointDetails> endpoints) {
+			this.endpoints = endpoints;
 		}
 		public String getState() {
 			return state;
@@ -181,26 +210,39 @@ public class CircuitDetailsResults extends Results {
 		public void setState(String state) {
 			this.state = state;
 		}
+		public String getDescription() {
+			return description;
+		}
+		public void setDescription(String description) {
+			this.description = description;
+		}
 		public String getCreated_on() {
 			return created_on;
 		}
 		public void setCreated_on(String created_on) {
 			this.created_on = created_on;
 		}
+		public String getLast_modified_on() {
+			return last_modified_on;
+		}
+		public void setLast_modified_on(String last_modified_on) {
+			this.last_modified_on = last_modified_on;
+		}
 		@Override
 		public String toString() {
-			return "CircuitDetails [last_modified_by=" + last_modified_by + ", paths=" + paths + ", state=" + state
-					+ ", created_on=" + created_on + "]";
+			return "CircuitDetails [last_modified_by=" + last_modified_by + " created_by=" + created_by + " state=" + state + 
+					" description=" + description + " created_on=" + created_on + " last_modified_on=" + last_modified_on + 
+					" paths=" + paths + " endpoints=" + endpoints + "]";
 		}
 	}
 	
-	CircuitDetails results;
+	List<CircuitDetail> results;
 	
-	public CircuitDetails getResults() {
+	public List<CircuitDetail> getResults() {
 		return results;
 	}
 
-	public void setResults(CircuitDetails results) {
+	public void setResults(List<CircuitDetail> results) {
 		this.results = results;
 	}
 
