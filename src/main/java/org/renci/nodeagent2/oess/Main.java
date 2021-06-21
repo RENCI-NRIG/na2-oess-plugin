@@ -273,5 +273,8 @@ public class Main implements Plugin {
 		
 		OESSEndpoint ep = parseUrn(urn);
 		System.out.println(urn + ": " + ep.node + "@" + ep.intface);
+		
+		OESSEndpoint ep1 = parseUrn(urn1);
+		System.out.println(urn + ": " + ep1.node + "@" + ep1.intface);
 	}
 }
