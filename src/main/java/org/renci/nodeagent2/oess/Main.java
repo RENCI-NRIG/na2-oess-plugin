@@ -57,15 +57,14 @@ public class Main implements Plugin {
 	private static final String DEBUGHTTP_PROP = "debug.http";
 	private static final String WORKGROUP_ID_PROP = "workgroup.id";
 	private static final String OESSURL_PROP = "oess.url";
-	private static final String USE_SHORTEST_PATH_PROP = "oess.use.shortest.path";
 	private static final String API_COMMENT_PROP = "oess.comment";
 	
-	private static Pattern urnPattern = Pattern.compile("urn:ogf:network:domain=([\\w.-]+):node=([\\w.-]+):port=([/\\w.-]+).*");
+	private static Pattern urnPattern = Pattern.compile("urn:ogf:network:domain=([\\w.-]+):node=([\\w.-]+):port=([/\\w-]+([:.][\\d]+)?).*");
+	//private static Pattern urnPattern = Pattern.compile("urn:ogf:network:domain=([\\w\\.\\-]+):node=([\\w\\.\\-]+):port=([/\\w.-]+[:\\d]+)+.*");
 
 	Log log;
 	private Driver oessDriver = null;
 	NetworkType nt;
-	boolean useShortestPath = true;
 	String apiComment = "EXOGENI Circuit";
 	
 	// OESS Supports both types
@@ -121,8 +120,6 @@ public class Main implements Plugin {
 					throw new PluginException("Plugin configuration must specify mpls network type only. Instead " + configProperties.get(NETTYPE_PROP));
 
 			int wgid = Integer.parseInt(configProperties.get(WORKGROUP_ID_PROP));
-			
-			useShortestPath = yesOption(configProperties.get(USE_SHORTEST_PATH_PROP));
 			
 			// client does not send name as part of handshake to tell server which certs to present
 			// doesn't seem to work with OESS servers.
@@ -249,29 +246,30 @@ public class Main implements Plugin {
 	}
 
 	public static void main(String[] argv) {
-		String urn = "urn:ogf:network:domain=al2s.net.internet2.edu:node=sdn-sw.houh.net.internet2.edu:port=et-0/3/0.0";
+		String urn = "urn:ogf:network:domain=al-2s.net.internet2.edu:node=sdn-sw.houh.net.internet2.edu:port=et-0/3/0.0";
+		String urn1 = "urn:ogf:network:domain=al-2s.net.internet2.edu:node=sdn-sw.houh.net.internet2.edu:port=xe-0/1/10:10";
 		
 		Matcher m = urnPattern.matcher(urn);
 		
 		if (m.matches())  {
 			System.out.println("COOL");
-			System.out.println(m.group(1));
-			System.out.println(m.group(2));
-			System.out.println(m.group(3));
+			System.out.println("domain= " + m.group(1));
+			System.out.println("node= " + m.group(2));
+			System.out.println("port= " + m.group(3));
 		}
 		else
 			System.out.println("NOT COOL");
 		
-		String[] fields = {"al2s.net.internet2.edu", "sdn-sw.houh.net.internet2.edu", "et-0/3/0.0" };
+		Matcher m1 = urnPattern.matcher(urn1);
 		
-		Pattern p1 = Pattern.compile("([/\\w.-]+)");
-		for (String f: fields) {
-			Matcher m1 = p1.matcher(f);
-			if (m1.matches()) 
-				System.out.println(f + " COOL");
-			else
-				System.out.println(f + " NOT COOL"); 
+		if (m1.matches())  {
+			System.out.println("COOL");
+			System.out.println("domain= " + m1.group(1));
+			System.out.println("node= " + m1.group(2));
+			System.out.println("port= " + m1.group(3));
 		}
+		else
+			System.out.println("NOT COOL");
 		
 		OESSEndpoint ep = parseUrn(urn);
 		System.out.println(urn + ": " + ep.node + "@" + ep.intface);
