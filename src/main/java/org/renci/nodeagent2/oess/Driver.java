@@ -17,17 +17,21 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.renci.nodeagent2.agentlib.Util;
 import org.renci.nodeagent2.oess.Main.NetworkType;
 import org.renci.nodeagent2.oess.json.CircuitDetailsResults;
-import org.renci.nodeagent2.oess.json.NodeStatusResults;
 import org.renci.nodeagent2.oess.json.ProvisionCircuitResults;
-import org.renci.nodeagent2.oess.json.ShortestPathResults;
 import org.renci.nodeagent2.oess.json.StatusResults;
 import org.renci.nodeagent2.oess.json.WorkgroupResults;
 import org.springframework.http.HttpRequest;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.BufferingClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestExecution;
@@ -39,24 +43,23 @@ import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.util.MultiValueMap;
+import org.springframework.util.LinkedMultiValueMap;
 
 public class Driver {
 
     private static final String JSON_CIRCUIT_ID = "circuit_id";
-    private static final String JSON_TYPE = "type";
-    private static final String JSON_LINK = "link";
+    private static final String JSON_CIRCUIT_STATE = "state";
     private static final String JSON_BANDWIDTH = "bandwidth";
     private static final String JSON_DESCRIPTION = "description";
-    private static final String JSON_TAG = "tag";
-    private static final String JSON_INTERFACE = "interface";
-    private static final String JSON_NODE = "node";
     private static final String JSON_REMOVE_TIME = "remove_time";
     private static final String JSON_PROVISION_TIME = "provision_time";
     private static final String JSON_WORKGROUP_ID = "workgroup_id";
     private static final String JSON_METHOD = "method";
+    private static final String JSON_ENDPOINT = "endpoint";
 
     String username, password;
-    String oessUrl, dataCgiUrl, provisionCgiUrl;
+    String oessUrl, dataCgiUrl, circuitCgiUrl;
     boolean debugHttp = false;
     boolean disableSSLChecks = false;
     NetworkType netType = NetworkType.mpls;
@@ -99,7 +102,8 @@ public class Driver {
      */
     private void printConverters(RestTemplate tmp) {
         for(HttpMessageConverter<?> conv: tmp.getMessageConverters()) {
-            log.debug(conv.getClass().getSimpleName() + " " + conv.getSupportedMediaTypes());
+        	System.out.println(conv.getClass().getSimpleName() + " " + conv.getSupportedMediaTypes());
+            log.info(conv.getClass().getSimpleName() + " " + conv.getSupportedMediaTypes());
         }
     }
 
@@ -200,13 +204,14 @@ public class Driver {
         // Jaxb2RootElementHttpMessageConverter [application/xml, text/xml, application/*+xml]
         // MappingJackson2HttpMessageConverter [application/json, application/*+json]
 
+        /* - no longer needed, it appears /ib 06/15/2021
         // substitute for just one JSON converter with extended media type list
         MappingJackson2HttpMessageConverter jackson2 = new MappingJackson2HttpMessageConverter();
         List<MediaType> jmt = new ArrayList<>(jackson2.getSupportedMediaTypes());
         jmt.add(MediaType.TEXT_PLAIN);
         jackson2.setSupportedMediaTypes(jmt);
         restTemplate.setMessageConverters(Arrays.asList(jackson2));
-
+		*/
         return restTemplate;
     }
 
@@ -230,10 +235,10 @@ public class Driver {
         }
         oessUrl = url;
         dataCgiUrl = oessUrl + "/data.cgi";
-        provisionCgiUrl = oessUrl + "/provisioning.cgi";
+        circuitCgiUrl = oessUrl + "/circuit.cgi";
         debugHttp = debug;
 
-        log.info("Using OESS data.cgi "+ dataCgiUrl + " provisioning cgi " + provisionCgiUrl + " with HTTP debug " + (debugHttp ? "on" : " off"));
+        log.info("Using OESS data.cgi "+ dataCgiUrl + " circuit.cgi " + circuitCgiUrl + " with HTTP debug " + (debugHttp ? "on" : " off"));
 
         if (disableSNI)
             System.setProperty("jsse.enableSNIExtension", "false");
@@ -260,103 +265,6 @@ public class Driver {
     }
 
     /**
-     * Get node status records
-     * @return
-     */
-    public NodeStatusResults getAllNodeStatus()  throws OESSException {
-        log.info("Invoking getAllNodeStatus()");
-        UriComponentsBuilder builder1 = UriComponentsBuilder.fromHttpUrl(dataCgiUrl)
-            .queryParam(JSON_METHOD, "get_all_node_status");
-
-        if (debugHttp) 
-            log.debug(builder1.build().encode().toUri());
-
-        NodeStatusResults res = restTemplate.getForObject(builder1.build().encode().toUri(), NodeStatusResults.class);
-        if (res.getError_text() != null)
-            throw new OESSException("Unable to get node status information: " + res.getError_text());
-        return res;
-    }
-
-    /**
-     * Get shortest path between src and dst
-     * @param t
-     * @param src
-     * @param dst
-     * @return
-     * @throws OESSException
-     */
-    public ShortestPathResults getShortestPath(String src, String dst) throws OESSException {
-        log.info("Invoking getShortestPath()");
-        UriComponentsBuilder builder4 = UriComponentsBuilder.fromHttpUrl(dataCgiUrl)
-            .queryParam(JSON_METHOD, "get_shortest_path")
-            .queryParam(JSON_TYPE, netType.name())
-            .queryParam(JSON_NODE, src)
-            .queryParam(JSON_NODE, dst);
-        if (debugHttp) 
-            log.debug(builder4.build().encode().toUri());
-
-        ShortestPathResults spres = restTemplate.getForObject(builder4.build().encode().toUri(), ShortestPathResults.class);
-        if (spres.getError_text() != null)
-            throw new OESSException("Unable to compute shortest path between: " + src + " and " + dst + " due to: " + 
-                    spres.getError_text());
-        return spres;
-    }
-
-    /**
-     * Provision a ptop circuit using shortest path
-     * @param desc
-     * @param bw
-     * @param src
-     * @param srcInt
-     * @param srcTag
-     * @param dst
-     * @param dstInt
-     * @param dstTag
-     * @param spres
-     * @return
-     * @throws OESSException
-     */
-    public ProvisionCircuitResults provisionCircuit(String desc, int bw, 
-            String src, String srcInt, int srcTag, String dst, String dstInt, int dstTag,
-            ShortestPathResults spres) throws OESSException {
-        log.info("Invoking provisionCircuit() with shortets path for " + src + "/" + srcInt + "/" + srcTag + " and " + 
-                dst + "/" + dstInt + "/" + dstTag);
-        UriComponentsBuilder builder2 = UriComponentsBuilder.fromHttpUrl(provisionCgiUrl)
-            .queryParam(JSON_METHOD, "provision_circuit")
-            .queryParam(JSON_WORKGROUP_ID, wgid)
-            .queryParam(JSON_PROVISION_TIME, "-1")
-            .queryParam(JSON_REMOVE_TIME, "-1")
-            .queryParam(JSON_DESCRIPTION, desc)
-            .queryParam(JSON_BANDWIDTH, "" + bw)
-            .queryParam(JSON_NODE, src)
-            .queryParam(JSON_INTERFACE, srcInt)
-            .queryParam(JSON_TAG, srcTag)
-            .queryParam(JSON_NODE, dst)
-            .queryParam(JSON_INTERFACE, dstInt)
-            .queryParam(JSON_TAG, dstTag);
-
-        for(ShortestPathResults.Link l: spres.getResults()) {
-            builder2.queryParam(JSON_LINK, l.getLink());
-        }
-
-        if (debugHttp)
-            log.debug(builder2.build().encode().toUri());
-
-        fairLock.lock();
-        ProvisionCircuitResults res2 = null;
-        try {
-            res2 = restTemplate.getForObject(builder2.build().encode().toUri(), ProvisionCircuitResults.class);
-            if (res2.getError_text() != null)
-                throw new OESSException("Unable to provision circuit between " + src + "/" + srcInt + "/" + srcTag + " and " +
-                        dst + "/" + dstInt + "/" + dstTag + " due to " + res2.getError_text());
-        }
-        finally {
-            fairLock.unlock();
-        }
-        return res2;
-    }
-
-    /**
      * Provision a ptop circuit with default path (MPLS only according to docs)
      * @param desc
      * @param bw
@@ -373,27 +281,49 @@ public class Driver {
             String src, String srcInt, int srcTag, String dst, String dstInt, int dstTag) throws OESSException {
         log.info("Invoking provisionCircuit() with default path for " + src + "/" + srcInt + "/" + srcTag + " and " + 
                 dst + "/" + dstInt + "/" + dstTag);
-        UriComponentsBuilder builder2 = UriComponentsBuilder.fromHttpUrl(provisionCgiUrl)
-            .queryParam(JSON_METHOD, "provision_circuit")
-            .queryParam(JSON_WORKGROUP_ID, wgid)
-            .queryParam(JSON_PROVISION_TIME, "-1")
-            .queryParam(JSON_REMOVE_TIME, "-1")
-            .queryParam(JSON_DESCRIPTION, desc)
-            .queryParam(JSON_BANDWIDTH, "" + bw)
-            .queryParam(JSON_NODE, src)
-            .queryParam(JSON_INTERFACE, srcInt)
-            .queryParam(JSON_TAG, srcTag)
-            .queryParam(JSON_NODE, dst)
-            .queryParam(JSON_INTERFACE, dstInt)
-            .queryParam(JSON_TAG, dstTag);
+        CircuitDetailsResults.EndpointDetails endpointA = new CircuitDetailsResults.EndpointDetails(), 
+        		endpointZ = new CircuitDetailsResults.EndpointDetails();
+        
+        endpointA.setNode(src);
+        endpointA.setInterface(srcInt);
+        endpointA.setTag(srcTag);
+        endpointA.setBandwidth(bw);
+        
+        endpointZ.setNode(dst);
+        endpointZ.setInterface(dstInt);
+        endpointZ.setTag(dstTag);
+        endpointZ.setBandwidth(bw);
 
-        if (debugHttp)
-            log.debug(builder2.build().encode().toUri());
+        
+        String endpointAString = null;
+        String endpointZString = null;
+        try {
+            ObjectMapper mapper = new ObjectMapper(); 
+            mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+            endpointAString = mapper.writeValueAsString(endpointA);
+            endpointZString = mapper.writeValueAsString(endpointZ);
+        }
+        catch (JsonProcessingException je) {
+        	throw new OESSException("Unable to convert endpoint to JSON");
+        }
 
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        MultiValueMap<String, Object> params = new LinkedMultiValueMap<>();
+        params.add(JSON_METHOD, "provision");
+        params.add(JSON_WORKGROUP_ID, "" + wgid);
+        params.add(JSON_DESCRIPTION, desc);
+        params.add(JSON_PROVISION_TIME, "" + -1);
+        params.add(JSON_REMOVE_TIME, "" + -1);
+        params.add(JSON_ENDPOINT, endpointAString);
+        params.add(JSON_ENDPOINT, endpointZString);
+        
+        HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(params, headers);
+        
         fairLock.lock();
         ProvisionCircuitResults res2 = null;
         try {
-            res2 = restTemplate.getForObject(builder2.build().encode().toUri(), ProvisionCircuitResults.class);
+        	res2 = restTemplate.postForObject(circuitCgiUrl, request, ProvisionCircuitResults.class);
             if (res2.getError_text() != null)
                 throw new OESSException("Unable to provision circuit between " + src + "/" + srcInt + "/" + srcTag + " and " +
                         dst + "/" + dstInt + "/" + dstTag + " due to " + res2.getError_text());
@@ -406,8 +336,8 @@ public class Driver {
 
     public StatusResults removeCircuit(String circuitId) throws OESSException {
         log.info("Invoking removeCircuit() for " + circuitId);
-        UriComponentsBuilder builder3 = UriComponentsBuilder.fromHttpUrl(provisionCgiUrl)
-            .queryParam(JSON_METHOD, "remove_circuit")
+        UriComponentsBuilder builder3 = UriComponentsBuilder.fromHttpUrl(circuitCgiUrl)
+            .queryParam(JSON_METHOD, "remove")
             .queryParam(JSON_WORKGROUP_ID, wgid)
             .queryParam(JSON_REMOVE_TIME, "-1")
             .queryParam(JSON_CIRCUIT_ID, circuitId);
@@ -431,8 +361,9 @@ public class Driver {
 
     public CircuitDetailsResults circuitDetails(String circuitId) throws OESSException {
         log.info("Requesting circuit details for " + circuitId);
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(dataCgiUrl)
-            .queryParam(JSON_METHOD, "get_circuit_details")
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(circuitCgiUrl)
+            .queryParam(JSON_METHOD, "get")
+            .queryParam(JSON_WORKGROUP_ID, this.wgid)
             .queryParam(JSON_CIRCUIT_ID, circuitId);
 
         if (debugHttp)
@@ -444,31 +375,55 @@ public class Driver {
 
         return cdr;
     }
+    
+    public CircuitDetailsResults activeCircuitDetails() throws OESSException {
+        log.info("Requesting active circuit details for ");
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(circuitCgiUrl)
+            .queryParam(JSON_METHOD, "get")
+            .queryParam(JSON_WORKGROUP_ID, this.wgid)
+            .queryParam(JSON_CIRCUIT_STATE, "active");
+
+        if (debugHttp)
+            log.debug(builder.build().encode().toUri());
+
+        CircuitDetailsResults cdr = restTemplate.getForObject(builder.build().encode().toUri(), CircuitDetailsResults.class);
+        if (cdr.getError_text() != null) 
+            throw new OESSException("Unable to request active circuit details  due to " + cdr.getError_text());
+
+        return cdr;
+    }
 
     public static void main(String[] argv) {
         try {
 
-            Driver d = new Driver("oess", "oess", 1, "https://localhost:20443/oess", NetworkType.openflow, true, false, false);
+            Driver d = new Driver("exogeni_api", "fmdyru2zY@Kq4KB", 1301, 
+            		"https://al2s.net.internet2.edu/oess/services-kerb/", 
+            		NetworkType.mpls, true, false, false);
 
             WorkgroupResults wres = d.getWorkgroups();
             System.out.println(wres);
 
-            NodeStatusResults nres = d.getAllNodeStatus();
-            System.out.println(nres);
+            //ProvisionCircuitResults pcres = d.provisionCircuit("NEW API TEST CIRCUIT", 100, 
+            // 		"rtsw.star.net.internet2.edu", "et-8/0/0", 1875, 
+            //		"rtsw.hous.net.internet2.edu", "et-7/3/0", 1425);
+            //System.out.println(pcres);
 
-            ShortestPathResults spres = d.getShortestPath("DD", "UNC");
-            System.out.println(spres);
+            //System.out.println("Sleeping for 10 sec.");
+            //Thread.sleep(10000);
 
-            ProvisionCircuitResults pcres = d.provisionCircuit("API Circuit", 100, "DD", "DD-eth3", 100, "UNC", "UNC-eth3", 100, spres);
-            System.out.println(pcres);
+            //CircuitDetailsResults cdr = d.activeCircuitDetails();
+            //System.out.println(cdr);
 
-            Thread.sleep(5000);
+            //CircuitDetailsResults cdr = d.circuitDetails(pcres.getCircuit_id());
+            //System.out.println(cdr);
+            //if (cdr.getResults().size() > 0) {
+            //	System.out.println(cdr.getResults().get(0).getState());
+            //} else {
+            //	System.out.println("Unknown circuit");
+            //}
 
-            CircuitDetailsResults cdr = d.circuitDetails(pcres.getResults().getCircuit_id());
-            System.out.println(cdr);
-
-            StatusResults sres = d.removeCircuit(pcres.getResults().getCircuit_id());
-            System.out.println(sres);
+            //StatusResults sres = d.removeCircuit(pcres.getCircuit_id());
+            //System.out.println(sres);
 
         } catch (Exception e) {
             e.printStackTrace();
