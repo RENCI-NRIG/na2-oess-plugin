@@ -139,21 +139,22 @@ public class Main implements Plugin {
 	@Override
 	public PluginReturn join(Date until, Properties callerProps) throws PluginException {
 
-		if (!callerProps.containsKey(BW_PROP) ||
-				!callerProps.containsKey(EPA_PROP) ||
+		if (!callerProps.containsKey(EPA_PROP) ||
 				!callerProps.containsKey(EPZ_PROP) ||
 				!callerProps.containsKey(TAGA_PROP) ||
 				!callerProps.containsKey(TAGZ_PROP))
-			throw new PluginException("Insufficient configuration prameters for join operation: bw, endpoint URN[AZ] and tag[AZ] must be specified");
+			throw new PluginException("Insufficient configuration prameters for join operation: endpoint URN[AZ] and tag[AZ] must be specified");
 
-		if ((callerProps.get(BW_PROP).length() == 0) ||
-				(callerProps.get(EPA_PROP).length() == 0) ||
+		if ((callerProps.get(EPA_PROP).length() == 0) ||
 				(callerProps.get(EPZ_PROP).length() == 0) ||
 				(callerProps.get(TAGA_PROP).length() == 0) ||
 				(callerProps.get(TAGZ_PROP).length() == 0))
-			throw new PluginException("Insufficient configuration prameters for join operation: bw, endpoint URN[AZ] and tag[AZ] must be non-zero length");
+			throw new PluginException("Insufficient configuration prameters for join operation: endpoint URN[AZ] and tag[AZ] must be non-zero length");
 
 		long bw = 0;
+		if (callerProps.containsKey(BW_PROP)) {
+			bw = Long.parseLong(callerProps.get(BW_PROP));
+		}
 		int bwMbps = 0;
 		int srcTag = 0;
 		int dstTag = 0;
@@ -164,7 +165,6 @@ public class Main implements Plugin {
 		dst = parseUrn(callerProps.get(EPZ_PROP));
 		
 		try {
-			bw = Long.parseLong(callerProps.get(BW_PROP));
 			// ORCA operates on bps, OSCARS on Mbps
 			bwMbps = (int)Math.round(Math.ceil(bw/1000000.0));
 			
