@@ -287,12 +287,14 @@ public class Driver {
         endpointA.setNode(src);
         endpointA.setInterface(srcInt);
         endpointA.setTag(srcTag);
-        endpointA.setBandwidth(bw);
+        // disabling bandwidth due to OESS limitations 10/04/2021 /ib
+        //endpointA.setBandwidth(bw);
         
         endpointZ.setNode(dst);
         endpointZ.setInterface(dstInt);
         endpointZ.setTag(dstTag);
-        endpointZ.setBandwidth(bw);
+        // disabling bandwidth due to OESS limitations 10/04/2021 /ib
+        //endpointZ.setBandwidth(bw);
 
         
         String endpointAString = null;
