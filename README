@@ -1,3 +1,5 @@
+This code is no longer being maintained. The repo is kept for historical reasons.
+
 For NA2 configuration file, the following parameters can be specified:
 
                 <plugin name="oess-plugin">
